@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir PDF para Análisis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 400px;
+            background-color: #f9f9f9;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .instructions {
+            margin-top: 20px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .button-container {
+            margin-top: 20px;
+        }
+        .download-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .download-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Análisis de PDF</h1>
+    <p>Sube un archivo PDF y obtén los resultados procesados en formato tabla y la opción de descargarlos como CSV.</p>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <label for="file">Selecciona un archivo PDF:</label><br>
+        <input type="file" name="file" id="file" accept=".pdf" required><br><br>
+        <button type="submit">Subir y Analizar</button>
+    </form>
+
+    <div class="instructions">
+        <p><strong>Nota:</strong> Una vez procesado el archivo, los resultados aparecerán aquí mismo junto con la opción de descargar un archivo CSV.</p>
+    </div>
+
+    {% if tabla_disponible %}
+    <h2>Resultados del Análisis</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Cód.Obra</th>
+                <th>Titulo obra / Nombre</th>
+                <th>Suma Neto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fila in tabla_resumida.to_dict(orient='records') %}
+            <tr>
+                <td>{{ fila['Cód.Obra'] }}</td>
+                <td>{{ fila['Titulo obra / Nombre'] }}</td>
+                <td>{{ fila['Suma Neto'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="button-container">
+        <a href="/descargar_csv?csv_path={{ csv_path }}" class="download-button">Descargar Resultados en CSV</a>
+    </div>
+    {% endif %}
+</body>
+</html>
