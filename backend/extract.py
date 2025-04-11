@@ -1,6 +1,7 @@
 import pdfplumber
 import pandas as pd
 import re
+from backend.utils import obtener_neto
 
 def extraer_y_procesar_tablas(pdf_path):
     """
@@ -16,13 +17,10 @@ def extraer_y_procesar_tablas(pdf_path):
         "%": r"^\d+(\.\d+)?|^\.\d+",
         "Fecha": r"^\d{2}/\d{2}/\d{4}",
         "Terr.": r"^",
-        "Cant.": r"^\d+",
-        "Origen": r"^-.+-$",
-        "Local/Productor": r"^-([^\d]*)",
-        "Neto": r"^\d{1,3}(,\d{3})*(\.\d+)?"
+        "Cant.": r"^\d+"
     }
 
-    columnas = list(criterios_titulo_nombre.keys()) + list(criterios_resto.keys())
+    columnas = list(criterios_titulo_nombre.keys()) + list(criterios_resto.keys()) + ["Neto"]
     tablas_procesadas = []
 
     with pdfplumber.open(pdf_path) as pdf:
@@ -53,9 +51,9 @@ def extraer_y_procesar_tablas(pdf_path):
                                 
                                 # Verificar si parte_resto tiene un salto de línea al final
                                 if parte_resto.__contains__("\n"):
-                                    contenido_extra = parte_resto.split("\n", 1)[1].strip()  # Contenido después del '\n'
+                                    #contenido_extra = parte_resto.split("\n", 1)[1].strip()  # Contenido después del '\n'
                                     parte_resto = parte_resto.split("\n", 1)[0].strip()  # Remover '\n' y lo que sigue
-                                    parte_titulo_nombre += f" {contenido_extra}"  # Agregar contenido extra a parte_titulo_nombre
+                                    #parte_titulo_nombre += f" {contenido_extra}"  # Agregar contenido extra a parte_titulo_nombre
                                 
                                 nueva_fila = []
 
@@ -77,6 +75,12 @@ def extraer_y_procesar_tablas(pdf_path):
                                     else:
                                         nueva_fila.append(None)
                                 
+                                resultado = obtener_neto(parte_resto)
+                                if resultado is not None:
+                                    nueva_fila.append(resultado)
+                                else:
+                                    nueva_fila.append("0")
+
                                 # Añadir la fila procesada al nuevo DataFrame
                                 nuevo_df.loc[len(nuevo_df)] = nueva_fila
                         
