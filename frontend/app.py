@@ -28,6 +28,7 @@ def index():
 
             # Procesar el archivo PDF
             tablas = extraer_y_procesar_tablas(file_path)
+            #print(tablas)
             tabla_combinada = combinar_tablas(tablas)
             tabla_resumida = generar_tabla_resumida(tabla_combinada)
 

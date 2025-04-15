@@ -8,7 +8,7 @@ def extraer_y_procesar_tablas(pdf_path):
     Extrae y procesa tablas desde un PDF.
     """
     criterios_titulo_nombre = {
-        "Titulo obra / Nombre": r"^.{1,50}"
+        "Titulo obra / Nombre": r"^.{1,44}"
     }
 
     criterios_resto = {
@@ -44,9 +44,24 @@ def extraer_y_procesar_tablas(pdf_path):
                         # Procesar las filas una por una
                         for _, fila in df_filtrado.iterrows():
                             fila_str = " ".join(str(celda).strip() for celda in fila if pd.notna(celda))  # Concatenar toda la fila
-                            if " E " in fila_str:
+                            
+                            subcadena = fila_str[20:51]
+                            posicion = None
+                            posicion_final = None
+                            for delimitador in [" CA ", " A ", " E "]:
+                                if(delimitador in subcadena):
+                                    # Obtener posición en la subcadena
+                                    posicion_subcadena = subcadena.find(delimitador)
+                                    # Calcular posición en el string original
+                                    posicion = 20 + posicion_subcadena
+                                    posicion_final = posicion + len(delimitador) - 1
+
+
+                            if (posicion is not None) and (posicion_final is not None):
                                 # Separar la fila en las dos partes
-                                parte_titulo_nombre, parte_resto = fila_str.split(" E ", 1)
+                                parte_titulo_nombre = fila_str[:posicion]
+                                parte_resto = fila_str[posicion_final:]
+                                #parte_titulo_nombre, parte_resto = fila_str.split(d, 1)
                                 parte_resto = "E " + parte_resto  # Añadir " E " al principio de parte_resto
                                 
                                 # Verificar si parte_resto tiene un salto de línea al final
