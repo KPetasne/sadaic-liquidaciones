@@ -20,4 +20,4 @@ EXPOSE 8080
 ENV PYTHONPATH=/app
 
 # Run Gunicorn to start the application on port 8080
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "--access-logfile", "-", "frontend.app:app"]
+CMD ["gunicorn", "--workers", "3", "--timeout", "240", "-b", "0.0.0.0:8080", "--access-logfile", "-", "frontend.app:app"]
