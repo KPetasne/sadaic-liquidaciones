@@ -33,7 +33,7 @@ def index():
             tabla_resumida = generar_tabla_resumida(tabla_combinada)
 
             # Guardar el archivo CSV
-            csv_path = "temp/resultados.csv"
+            csv_path = f"temp/{uuid.uuid4()}_resultados.csv"
             tabla_resumida.to_csv(csv_path, index=False)
 
             # Actualizar el estado de la tabla

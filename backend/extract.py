@@ -1,26 +1,14 @@
 import pdfplumber
 import pandas as pd
 import re
-from backend.utils import obtener_neto
+from backend.utils import obtener_neto, obtener_codigo_obra, obtener_posiciones_delimitadores
+from backend.constants import DELIMITADORES, COLUMNAS
 
 def extraer_y_procesar_tablas(pdf_path):
     """
     Extrae y procesa tablas desde un PDF.
     """
-    criterios_titulo_nombre = {
-        "Titulo obra / Nombre": r"^.{1,44}"
-    }
-
-    criterios_resto = {
-        "Prof.": r"^E\s",
-        "Cód.Obra": r"^\d{7}",
-        "%": r"^\d+(\.\d+)?|^\.\d+",
-        "Fecha": r"^\d{2}/\d{2}/\d{4}",
-        "Terr.": r"^",
-        "Cant.": r"^\d+"
-    }
-
-    columnas = list(criterios_titulo_nombre.keys()) + list(criterios_resto.keys()) + ["Neto"]
+    
     tablas_procesadas = []
 
     with pdfplumber.open(pdf_path) as pdf:
@@ -39,56 +27,28 @@ def extraer_y_procesar_tablas(pdf_path):
                     
                     # Verificar si el DataFrame tiene contenido antes de continuar
                     if not df_filtrado.empty:
-                        nuevo_df = pd.DataFrame(columns=columnas)  # Crear nuevo DataFrame con todas las columnas
+                        nuevo_df = pd.DataFrame(columns=COLUMNAS)  # Crear nuevo DataFrame con todas las columnas
 
                         # Procesar las filas una por una
                         for _, fila in df_filtrado.iterrows():
                             fila_str = " ".join(str(celda).strip() for celda in fila if pd.notna(celda))  # Concatenar toda la fila
                             
-                            subcadena = fila_str[20:51]
-                            posicion = None
-                            posicion_final = None
-                            for delimitador in [" CA ", " A ", " E "]:
-                                if(delimitador in subcadena):
-                                    # Obtener posición en la subcadena
-                                    posicion_subcadena = subcadena.find(delimitador)
-                                    # Calcular posición en el string original
-                                    posicion = 20 + posicion_subcadena
-                                    posicion_final = posicion + len(delimitador) - 1
-
+                            (posicion, posicion_final) = obtener_posiciones_delimitadores(fila_str)
 
                             if (posicion is not None) and (posicion_final is not None):
                                 # Separar la fila en las dos partes
                                 parte_titulo_nombre = fila_str[:posicion]
                                 parte_resto = fila_str[posicion_final:]
-                                #parte_titulo_nombre, parte_resto = fila_str.split(d, 1)
-                                parte_resto = "E " + parte_resto  # Añadir " E " al principio de parte_resto
                                 
                                 # Verificar si parte_resto tiene un salto de línea al final
                                 if parte_resto.__contains__("\n"):
-                                    #contenido_extra = parte_resto.split("\n", 1)[1].strip()  # Contenido después del '\n'
                                     parte_resto = parte_resto.split("\n", 1)[0].strip()  # Remover '\n' y lo que sigue
-                                    #parte_titulo_nombre += f" {contenido_extra}"  # Agregar contenido extra a parte_titulo_nombre
                                 
                                 nueva_fila = []
+                                nueva_fila.append(parte_titulo_nombre) # Agregar criterios_titulo_nombre
 
-                                # Procesar criterios_titulo_nombre
-                                for columna, regex in criterios_titulo_nombre.items():
-                                    match = re.search(regex, parte_titulo_nombre)
-                                    if match:
-                                        nueva_fila.append(match.group())
-                                        parte_titulo_nombre = parte_titulo_nombre.replace(match.group(), "", 1).strip()
-                                    else:
-                                        nueva_fila.append(None)
-                                
-                                # Procesar criterios_resto
-                                for columna, regex in criterios_resto.items():
-                                    match = re.search(regex, parte_resto)
-                                    if match:
-                                        nueva_fila.append(match.group())
-                                        parte_resto = parte_resto.replace(match.group(), "", 1).strip()
-                                    else:
-                                        nueva_fila.append(None)
+                                codigo_obra = obtener_codigo_obra(parte_resto)
+                                nueva_fila.append(codigo_obra)
                                 
                                 resultado = obtener_neto(parte_resto)
                                 if resultado is not None:
@@ -103,7 +63,6 @@ def extraer_y_procesar_tablas(pdf_path):
                         
                         # Guardar la tabla procesada
                         tablas_procesadas.append(nuevo_df)
-                        #print(f"Tabla válida encontrada en la página {num_pagina}:\n", nuevo_df)
                     else:
                         print(f"Tabla descartada en la página {num_pagina}: No tiene encabezado válido.")
 
